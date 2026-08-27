@@ -1,0 +1,23 @@
+{% load static %}
+<ul class="list-unstyled">
+    {% for cat in categories %}
+        {% if not cat.parent %}
+            <li class="mb-2">
+                <a href="{{ cat.get_absolute_url }}" class="text-decoration-none {% if category and category.id == cat.id %}fw-bold text-primary{% endif %}">
+                    {{ cat.name }}
+                </a>
+                {% if cat.category_set.exists %}
+                    <ul class="list-unstyled ms-3 mt-1">
+                        {% for child in cat.category_set.all %}
+                            <li>
+                                <a href="{{ child.get_absolute_url }}" class="text-decoration-none {% if category and category.id == child.id %}fw-bold text-primary{% endif %}">
+                                    {{ child.name }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endif %}
+    {% endfor %}
+</ul>

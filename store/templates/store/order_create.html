@@ -1,0 +1,153 @@
+{% extends "store/base.html" %}
+
+{% block title %}Оформление заказа{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Детали заказа</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="orderForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Имя</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Фамилия</label>
+                        {{ form.last_name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Телефон</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Адрес доставки</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Город</label>
+                        {{ form.city }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Индекс</label>
+                        {{ form.postal_code }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Способ оплаты</label>
+                        {{ form.payment_method }}
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Подтвердить заказ</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Ваш заказ</h4>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Кол-во</th>
+                            <th>Цена</th>
+                            <th>Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart.items.all %}
+                        <tr>
+                            <td style="vertical-align: middle;">
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 60px; height: 50px; object-fit: cover;" class="rounded">
+                                    {% else %}
+                                        <div class="bg-light rounded" style="width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center;">🛒</div>
+                                    {% endif %}
+                                    <span>{{ item.product.name }}</span>
+                                </div>
+                            </td>
+                            <td style="vertical-align: middle;">{{ item.quantity }}</td>
+                            <td style="vertical-align: middle;">
+                                {% if item.product.discount > 0 %}
+                                    <span class="text-danger">{{ item.product.final_price|floatformat:2 }} ₽</span>
+                                    <small class="text-muted d-block"><del>{{ item.product.price|floatformat:2 }} ₽</del></small>
+                                {% else %}
+                                    {{ item.product.price|floatformat:2 }} ₽
+                                {% endif %}
+                            </td>
+                            <td style="vertical-align: middle;">
+                                {% if item.product.discount > 0 %}
+                                    {{ item.product.final_price|floatformat:2 }} ₽
+                                {% else %}
+                                    {{ item.product.price|floatformat:2 }} ₽
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Итого:</strong></td>
+                            <td><strong>{{ cart.get_total_price|floatformat:2 }} ₽</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div id="cardPaymentBlock" style="display: none;">
+                    <h5>Платёжные данные</h5>
+                    <div class="mb-3">
+                        <label class="form-label">Номер карты</label>
+                        {{ form.card_number }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Срок действия (ММ/ГГ)</label>
+                            {{ form.card_expiry }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CVV</label>
+                            {{ form.card_cvv }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Имя держателя</label>
+                        {{ form.card_holder }}
+                    </div>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // способ оплаты банковской картой
+    const paymentSelect = document.querySelector('select[name="payment_method"]');
+    const cardBlock = document.getElementById('cardPaymentBlock');
+    
+    function toggleCardBlock() {
+        if (paymentSelect.value === 'card') {
+            cardBlock.style.display = 'block';
+        } else {
+            cardBlock.style.display = 'none';
+        }
+    }
+    if (paymentSelect) {
+        paymentSelect.addEventListener('change', toggleCardBlock);
+        toggleCardBlock();
+    }
+</script>
+{% endblock %}

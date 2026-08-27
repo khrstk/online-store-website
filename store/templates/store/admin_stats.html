@@ -1,0 +1,127 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block title %}Анализ продаж{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Отчёт по продажам</h1>
+
+    <!-- форма фильтров -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Фильтры</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label>Дата от</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label>Дата до</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <label>Категория</label>
+                    <select name="category" class="form-select">
+                        <option value="">Все категории</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ключевые показатели -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Выручка</h5>
+                    <h3>{{ total_revenue|floatformat:2 }} ₽</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Заказов</h5>
+                    <h3>{{ total_orders }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h5 class="card-title">Средний чек</h5>
+                    <h3>{{ avg_order|floatformat:2 }} ₽</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- график продаж по дням -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Продажи по дням</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Дата</th><th>Заказов</th><th>Выручка</th></tr>
+                </thead>
+                <tbody>
+                    {% for day in sales_by_day %}
+                    <tr>
+                        <td>{{ day.order__created_at__date|date:"d.m.Y" }}</td>
+                        <td>{{ day.day_orders }}</td>
+                        <td>{{ day.day_total|floatformat:2 }} ₽</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3">Нет данных</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- топ товаров -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Топ‑20 товаров по выручке</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr><th>Артикул</th><th>Название</th><th>Продано (шт)</th><th>Выручка</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in top_products %}
+                    <tr>
+                        <td>{{ item.product__sku|default:"—" }}</td>
+                        <td>{{ item.product__name }}</td>
+                        <td>{{ item.total_quantity }}</td>
+                        <td>{{ item.total_revenue|floatformat:2 }} ₽</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4">Нет данных</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- кнопка экспорта CSV -->
+    <div class="text-end">
+        <a href="{% url 'store:export_sales_report' %}?{{ request.GET.urlencode }}" class="btn btn-success">
+            Экспортировать отчёт (CSV)
+        </a>
+    </div>
+</div>
+{% endblock %}

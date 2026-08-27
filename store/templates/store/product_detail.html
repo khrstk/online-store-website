@@ -1,0 +1,111 @@
+{% extends "store/base.html" %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- левая колонка -->
+    <div class="col-md-6">
+        {% if product.images.exists %}
+            <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% for img in product.images.all %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                            <img src="{{ img.image.url }}" class="d-block w-100" alt="{{ img.alt_text }}">
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        {% elif product.image %}
+            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+        {% else %}
+            <div class="bg-light text-center py-5">Нет фото</div>
+        {% endif %}
+
+        <div class="mt-5">
+            <h3>Отзывы ({{ product.reviews.count }})</h3>
+            {% include 'store/reviews_list.html' with reviews=product.reviews.all %}
+        </div>
+    </div>
+    <!-- правая колонка -->
+    <div class="col-md-6">
+        <h1>{{ product.name }}</h1>
+        <p class="text-muted">
+            Категория: 
+            <a href="{{ product.category.get_absolute_url }}">{{ product.category.name }}</a>
+        </p>
+
+        {% if product.sku %}
+            <p><strong>Артикул:</strong> {{ product.sku }}</p>
+        {% endif %}
+        {% if product.composition %}
+            <p><strong>Состав:</strong> {{ product.composition|linebreaksbr }}</p>
+        {% endif %}
+
+        <p>{{ product.description|linebreaksbr }}</p>
+
+        <div class="mb-3">
+            {% if product.discount > 0 %}
+                <span class="text-danger display-4"><strong>{{ product.final_price|floatformat:2 }} ₽</strong></span>
+                <del class="text-muted h4 ms-3">{{ product.price|floatformat:2 }} ₽</del>
+                <span class="badge bg-success ms-3">-{{ product.discount|floatformat:0 }}%</span>
+            {% else %}
+                <span class="display-4"><strong>{{ product.price|floatformat:2 }} ₽</strong></span>
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+            <a href="{% url 'store:toggle_wishlist' product.id %}" class="btn btn-outline-danger mb-3">
+                {% if is_in_wishlist %}В избранном{% else %}В избранное{% endif %}
+            </a>
+        {% endif %}
+
+        {% if product.stock > 0 %}
+            {% if user.is_authenticated %}
+                <form action="{% url 'store:cart_add' product.id %}" method="post" class="d-flex gap-2 mb-3">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label for="id_quantity">Количество:</label>
+                        <input type="number" name="quantity" value="1" min="1" max="{{ max_quantity }}" class="form-control" style="width: 80px;" id="id_quantity">
+                    </div>
+                    <button type="submit" class="btn btn-success btn-lg">Добавить в корзину</button>
+                </form>
+            {% else %}
+                <div class="alert alert-info mt-2">
+                    <a href="{% url 'login' %}">Войдите в аккаунт</a>, чтобы добавлять товары в корзину.
+                </div>
+            {% endif %}
+
+            {% if product.stock < global_max %}
+                <div class="alert alert-warning mt-2">
+                    Внимание! Осталось всего <strong>{{ product.stock }}</strong> шт.
+                </div>
+            {% endif %}
+            
+            <div class="mt-4">
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#reviewFormCollapse">
+                    Написать отзыв
+                </button>
+            </div>
+            <div class="collapse mt-3" id="reviewFormCollapse">
+                <div class="card card-body">
+                    <h4>Оставить отзыв</h4>
+                    <form method="post" action="{% url 'store:add_review' product.id %}">
+                        {% csrf_token %}
+                        {{ review_form.as_p }}
+                        <button type="submit" class="btn btn-primary mt-2">Отправить отзыв</button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <button class="btn btn-secondary btn-lg" disabled>Нет в наличии</button>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

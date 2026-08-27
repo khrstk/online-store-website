@@ -1,0 +1,95 @@
+{% extends "store/base.html" %}
+
+{% block title %}
+    {% if category %}
+        {{ category.name }}
+    {% else %}
+        Каталог товаров
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- левая колонка -->
+    <div class="col-md-3">
+        <div class="card mb-3">
+            <div class="card-header bg-primary text-white">Фильтр и сортировка</div>
+            <div class="card-body">
+                <form method="get" id="filter-form">
+                    {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+                    <div class="mb-2">
+                        <label>Цена от</label>
+                        <input type="number" name="min_price" class="form-control" value="{{ min_price|default:'' }}" placeholder="0">
+                    </div>
+                    <div class="mb-2">
+                        <label>Цена до</label>
+                        <input type="number" name="max_price" class="form-control" value="{{ max_price|default:'' }}" placeholder="10000">
+                    </div>
+                    <div class="mb-2">
+                        <label>Сортировка</label>
+                        <select name="sort" class="form-select">
+                            <option value="">По умолчанию</option>
+                            <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>Цена (по возрастанию)</option>
+                            <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>Цена (по убыванию)</option>
+                            <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>Название (А-Я)</option>
+                            <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Название (Я-А)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Применить</button>
+                    <a href="{{ request.path }}" class="btn btn-secondary w-100 mt-2">Сбросить фильтры</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- правая колонка -->
+    <div class="col-md-9">
+        <h1 class="mb-4">
+            {% if category %}
+                {{ category.name }}
+            {% elif query %}
+                Результаты поиска: "{{ query }}"
+            {% else %}
+                Все товары
+            {% endif %}
+        </h1>
+
+        <div class="row">
+            {% for product in products %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 {% if product.stock == 0 %}card-out-of-stock{% endif %}">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                        <div class="card-img-top bg-light text-center py-5">Нет фото</div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted">{{ product.description|truncatewords:15 }}</p>
+                        
+                        {% if product.discount > 0 %}
+                            <p class="card-text">
+                                <span class="text-danger"><strong>{{ product.final_price|floatformat:2 }} ₽</strong></span>
+                                <del class="text-muted ms-2">{{ product.price|floatformat:2 }} ₽</del>
+                                <span class="badge bg-success ms-2">-{{ product.discount|floatformat:0 }}%</span>
+                            </p>
+                        {% else %}
+                            <p class="card-text"><strong>{{ product.price|floatformat:2 }} ₽</strong></p>
+                        {% endif %}
+
+                        {% if product.stock == 0 %}
+                            <span class="badge-out-of-stock">Нет в наличии</span>
+                        {% endif %}
+                        
+                        <a href="{{ product.get_absolute_url }}" class="btn btn-primary w-100">Подробнее</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+                <div class="col">
+                    <div class="alert alert-info">Товаров не найдено.</div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

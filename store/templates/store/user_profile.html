@@ -1,0 +1,171 @@
+{% extends "store/base.html" %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <ul class="nav nav-tabs" id="profileTab" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#orders" type="button" role="tab">Мои заказы</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#favorites" type="button" role="tab">Избранное</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab">Профиль</button>
+            </li>
+        </ul>
+
+        <div class="tab-content mt-3">
+            <!-- заказы -->
+            <div class="tab-pane fade show active" id="orders" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Мои заказы</h4>
+                    </div>
+                    <div class="card-body">
+                        {% if orders %}
+                            {% for order in orders %}
+                                <div class="card mb-3">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <strong>Заказ #{{ order.id }}</strong>
+                                        <span class="badge 
+                                            {% if order.status == 'pending' %}bg-warning
+                                            {% elif order.status == 'confirmed' %}bg-info
+                                            {% elif order.status == 'shipped' %}bg-primary
+                                            {% elif order.status == 'delivered' %}bg-success
+                                            {% elif order.status == 'delayed' %}bg-danger
+                                            {% elif order.status == 'cancelled' %}bg-secondary
+                                            {% endif %}">
+                                            {{ order.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Дата:</strong> {{ order.created_at|date:"d.m.Y H:i" }}</p>
+                                        <p><strong>Адрес:</strong> {{ order.address }}, {{ order.city }}</p>
+                                        <p><strong>Сумма:</strong> {{ order.get_total_cost }} ₽</p>
+                                        <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#order-{{ order.id }}">
+                                            Состав заказа
+                                        </button>
+                                        <div class="collapse mt-2" id="order-{{ order.id }}">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr><th>Товар</th><th>Кол-во</th><th>Цена</th><th>Сумма</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in order.items.all %}
+                                                        <tr>
+                                                            <td>{{ item.product.name }}</td>
+                                                            <td>{{ item.quantity }}</td>
+                                                            <td>{{ item.price }} ₽</td>
+                                                            <td>{{ item.get_cost }} ₽</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info">У вас пока нет заказов.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <!-- избранное -->
+            <div class="tab-pane fade" id="favorites" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Избранные товары</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for item in wishlist_items %}
+                                <div class="col-md-3 mb-3">
+                                    <div class="card h-100">
+                                        {% if item.product.image %}
+                                            <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 150px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="card-img-top bg-light text-center py-4">Нет фото</div>
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h6>{{ item.product.name }}</h6>
+                                            <p class="text-danger">{{ item.product.price }} ₽</p>
+                                            <a href="{{ item.product.get_absolute_url }}" class="btn btn-sm btn-primary">Подробнее</a>
+                                            <a href="{% url 'store:toggle_wishlist' item.product.id %}" class="btn btn-sm btn-danger mt-1">Удалить</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% empty %}
+                                <p>У вас пока нет избранных товаров.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- профиль -->
+            <div class="tab-pane fade" id="profile" role="tabpanel">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Мои данные</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'store:profile_edit' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label>Имя пользователя</label>
+                                <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label>Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ user.email }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Имя</label>
+                                <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Фамилия</label>
+                                <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Телефон</label>
+                                <input type="text" name="phone" class="form-control" value="{{ profile.phone }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Адрес</label>
+                                <input type="text" name="address" class="form-control" value="{{ profile.address }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Город</label>
+                                <input type="text" name="city" class="form-control" value="{{ profile.city }}">
+                            </div>
+                            <div class="mb-3">
+                                <label>Индекс</label>
+                                <input type="text" name="postal_code" class="form-control" value="{{ profile.postal_code }}">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam) {
+            const tabButton = document.querySelector(`.nav-tabs button[data-bs-target="#${tabParam}"]`);
+            if (tabButton) {
+                const tab = new bootstrap.Tab(tabButton);
+                tab.show();
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% for sub in categories %}
+    <li class="dropdown-submenu">
+        <a class="dropdown-item" href="{{ sub.get_absolute_url }}">
+            {{ sub.name }}
+        </a>
+        {% if sub.category_set.exists %}
+            <ul class="dropdown-menu">
+                {% include 'store/category_dropdown.html' with categories=sub.category_set.all %}
+            </ul>
+        {% endif %}
+    </li>
+{% endfor %}

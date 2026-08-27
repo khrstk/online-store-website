@@ -1,0 +1,14 @@
+{% for review in product.reviews.all %}
+    <div class="card mb-2">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <strong>{{ review.author_name|default:review.user.username }}</strong>
+                <span>Оценка: {{ review.rating }}/5</span>
+            </div>
+            <p class="mt-2">{{ review.text }}</p>
+            <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+        </div>
+    </div>
+{% empty %}
+    <p class="text-muted">Пока нет отзывов. Будьте первым!</p>
+{% endfor %}
